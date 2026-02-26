@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String
+  color       String
+  description String?
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Region {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  description     String?
+  latitude        Float
+  longitude       Float
+  zoom            Int      @default(8)
+  events          Event[]  @relation("PrimaryRegion")
+  secondaryEvents Event[]  @relation("SecondaryRegion")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Tag {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  icon        String?
+  color       String     @default("#3B82F6")
+  description String?
+  events      EventTag[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Event {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  description     String
+  longDescription String?
+  venue           String
+  address         String
+  latitude        Float     @default(25.7617)
+  longitude       Float     @default(-80.1918)
+  startDate       DateTime
+  endDate         DateTime?
+  price           Float?
+  priceRange      String?
+  imageUrl        String?
+  website         String?
+  phone           String?
+  rating          Float     @default(0)
+  reviewCount     Int       @default(0)
+  viewCount       Int       @default(0)
+  isFeatured      Boolean   @default(false)
+  isActive        Boolean   @default(true)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  regionId          String
+  region            Region  @relation("PrimaryRegion", fields: [regionId], references: [id])
+  secondaryRegionId String?
+  secondaryRegion   Region? @relation("SecondaryRegion", fields: [secondaryRegionId], references: [id])
+
+  tags EventTag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventTag {
+  eventId String
+  tagId   String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, tagId])
+}
