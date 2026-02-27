@@ -23,22 +23,27 @@ export async function GET(request: Request) {
 
   try {
     const where: Record<string, unknown> = { isActive: true }
+    const andFilters: Record<string, unknown>[] = []
 
     if (category) where.category = { slug: category }
 
     if (region) {
-      where.OR = [
-        { region: { slug: region } },
-        { secondaryRegion: { slug: region } },
-      ]
+      andFilters.push({
+        OR: [
+          { region: { slug: region } },
+          { secondaryRegion: { slug: region } },
+        ],
+      })
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { venue: { contains: search } },
-      ]
+      andFilters.push({
+        OR: [
+          { title: { contains: search } },
+          { description: { contains: search } },
+          { venue: { contains: search } },
+        ],
+      })
     }
 
     if (featured === 'true') where.isFeatured = true
@@ -46,18 +51,20 @@ export async function GET(request: Request) {
     if (boundsParam) {
       const [south, west, north, east] = boundsParam.split(',').map(Number)
       if (!isNaN(south) && !isNaN(west) && !isNaN(north) && !isNaN(east)) {
-        where.AND = [
+        andFilters.push(
           { latitude: { gte: south } },
           { latitude: { lte: north } },
           { longitude: { gte: west } },
           { longitude: { lte: east } },
-        ]
+        )
       }
     }
 
     if (tag) {
       where.tags = { some: { tag: { slug: tag } } }
     }
+
+    if (andFilters.length) where.AND = andFilters
 
     const events = await db.event.findMany({
       where,
@@ -76,8 +83,6 @@ export async function GET(request: Request) {
 
     const eventsWithCoords = events.map(event => ({
       ...event,
-      latitude: event.latitude ?? 25.7617,
-      longitude: event.longitude ?? -80.1918,
       tags: event.tags.map(t => t.tag),
     }))
 

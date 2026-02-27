@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { toast } from '@/hooks/use-toast'
 import {
   Search,
   MapPin,
@@ -42,6 +43,11 @@ import {
   Zap,
   Star,
   Car,
+  Globe,
+  Ticket,
+  Navigation2,
+  Share2,
+  Bookmark,
 } from 'lucide-react'
 
 // Dynamic import for MapView
@@ -276,6 +282,15 @@ export default function FLEventsApp() {
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null)
   const [storyDetailsOpen, setStoryDetailsOpen] = useState(false)
   const [storyTouchStartY, setStoryTouchStartY] = useState<number | null>(null)
+  const [savedEventIds, setSavedEventIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem('saved_events')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  })
 
   // God Mode — toggled from /dev, persisted in localStorage
   // Must initialize as false to match server render, then sync after mount
@@ -298,6 +313,11 @@ export default function FLEventsApp() {
           fetch('/api/regions'),
           fetch('/api/tags'),
         ])
+
+        if (!eventsRes.ok || !categoriesRes.ok || !regionsRes.ok || !tagsRes.ok) {
+          throw new Error('Failed to load data')
+        }
+
         const eventsData = await eventsRes.json()
         const categoriesData = await categoriesRes.json()
         const regionsData = await regionsRes.json()
@@ -312,6 +332,7 @@ export default function FLEventsApp() {
         setLoading(false)
       } catch (error) {
         console.error('Error fetching data:', error)
+        toast({ title: 'Unable to load events', description: 'Please refresh and try again.' })
         setLoading(false)
       }
     }
@@ -324,6 +345,60 @@ export default function FLEventsApp() {
     else localStorage.removeItem('fl_region')
   }, [selectedRegion])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem('saved_events', JSON.stringify(savedEventIds))
+  }, [savedEventIds])
+
+  const getPriceLabel = useCallback((event: Event) => {
+    if (event.priceRange) return event.priceRange
+    if (event.price === 0) return 'Free'
+    return null
+  }, [])
+
+  const getDirectionsUrl = useCallback((event: Event) => {
+    if (Number.isFinite(event.latitude) && Number.isFinite(event.longitude)) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${event.latitude},${event.longitude}`
+    }
+    if (event.address) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.address)}`
+    }
+    return null
+  }, [])
+
+  const toggleSavedEvent = useCallback((event: Event) => {
+    setSavedEventIds((prev) => {
+      const isSaved = prev.includes(event.id)
+      const next = isSaved ? prev.filter((id) => id !== event.id) : [...prev, event.id]
+      toast({
+        title: isSaved ? 'Removed from saved' : 'Saved event',
+        description: isSaved ? 'This event was removed from your saved list.' : 'We saved this event for you.',
+      })
+      return next
+    })
+  }, [])
+
+  const handleShare = useCallback(async (event: Event) => {
+    const shareUrl = event.website || (typeof window !== 'undefined' ? window.location.href : '')
+    if (!shareUrl) {
+      toast({ title: 'No link available', description: 'This event does not have a shareable link yet.' })
+      return
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: event.title, text: event.description, url: shareUrl })
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl)
+        toast({ title: 'Link copied', description: 'Event link copied to clipboard.' })
+      } else {
+        toast({ title: 'Unable to share', description: 'Your browser does not support sharing.' })
+      }
+    } catch (error) {
+      console.error('Error sharing event:', error)
+      toast({ title: 'Share failed', description: 'Please try again.' })
+    }
+  }, [])
+
   // Search events
   const searchEvents = useCallback(async () => {
     setLoading(true)
@@ -335,10 +410,12 @@ export default function FLEventsApp() {
       if (selectedTag) params.append('tag', selectedTag)
       
       const res = await fetch(`/api/events?${params.toString()}`)
+      if (!res.ok) throw new Error('Search failed')
       const data = await res.json()
       setEvents(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error searching events:', error)
+      toast({ title: 'Search failed', description: 'Please try again in a moment.' })
     }
     setLoading(false)
   }, [searchQuery, selectedCategory, selectedRegion, selectedTag])
@@ -352,10 +429,12 @@ export default function FLEventsApp() {
   const fetchEventDetails = async (slug: string) => {
     try {
       const res = await fetch(`/api/events/${slug}`)
+      if (!res.ok) throw new Error('Failed to fetch event')
       const data = await res.json()
       setSelectedEvent(data)
     } catch (error) {
       console.error('Error fetching event details:', error)
+      toast({ title: 'Unable to load event', description: 'Please try again.' })
     }
   }
 
@@ -405,6 +484,18 @@ export default function FLEventsApp() {
     await fetch(`/api/dev/events/${event.slug}`, { method: 'DELETE', headers: { Authorization: `Bearer ${pw}` } })
     searchEvents()
   }
+
+  const selectedEventPriceLabel = selectedEvent ? getPriceLabel(selectedEvent) : null
+  const selectedEventDirections = selectedEvent ? getDirectionsUrl(selectedEvent) : null
+  const selectedEventSaved = selectedEvent ? savedEventIds.includes(selectedEvent.id) : false
+  const selectedEventHasWebsite = !!selectedEvent?.website
+  const selectedEventHasTickets = !!selectedEvent?.website && (
+    (selectedEvent?.price !== null && selectedEvent?.price !== undefined && selectedEvent.price > 0) ||
+    (selectedEvent?.priceRange ? selectedEvent.priceRange !== 'Free' : false)
+  )
+  const selectedEventShareLink = selectedEvent?.website || null
+  const selectedEventVenue = selectedEvent?.venue || 'Location TBA'
+  const selectedEventAddress = selectedEvent?.address || 'Location TBA'
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 max-w-full overflow-x-hidden">
@@ -637,7 +728,9 @@ export default function FLEventsApp() {
                                 </Badge>
                               ))
                             )}
-                            <span className="text-xs text-gray-400">{event.priceRange || 'Free'}</span>
+                            {getPriceLabel(event) && (
+                              <span className="text-xs text-gray-400">{getPriceLabel(event)}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                             <MapPin className="w-3 h-3" />
@@ -684,10 +777,12 @@ export default function FLEventsApp() {
                   if (selectedTag) params.append('tag', selectedTag)
 
                   const res = await fetch(`/api/events?${params.toString()}`)
+                  if (!res.ok) throw new Error('Reload failed')
                   const data = await res.json()
                   setEvents(Array.isArray(data) ? data : [])
                 } catch (error) {
                   console.error('Error reloading events:', error)
+                  toast({ title: 'Map reload failed', description: 'Unable to refresh events for this area.' })
                 }
               }}
             />
@@ -786,8 +881,8 @@ export default function FLEventsApp() {
                             Featured
                           </span>
                         )}
-                        {event.priceRange && (
-                          <span className="text-xs text-white/70 ml-auto">{event.priceRange}</span>
+                        {getPriceLabel(event) && (
+                          <span className="text-xs text-white/70 ml-auto">{getPriceLabel(event)}</span>
                         )}
                       </div>
                       <h2 className="text-[22px] font-bold text-white leading-tight mb-2">{event.title}</h2>
@@ -1392,8 +1487,8 @@ export default function FLEventsApp() {
                       >
                         {selectedEvent.region?.name}
                       </Badge>
-                      {selectedEvent.priceRange && (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">{selectedEvent.priceRange}</span>
+                      {selectedEventPriceLabel && (
+                        <span className="text-sm text-gray-500 dark:text-gray-400">{selectedEventPriceLabel}</span>
                       )}
                     </div>
                     <DialogHeader>
@@ -1407,8 +1502,8 @@ export default function FLEventsApp() {
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{selectedEvent.venue}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{selectedEvent.address}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{selectedEventVenue}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{selectedEventAddress}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -1430,7 +1525,59 @@ export default function FLEventsApp() {
                       </div>
                     </div>
                   )}
+                  {selectedEvent.price === 0 && (
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">Free</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No ticket required</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Actions */}
+                {(selectedEventHasWebsite || selectedEventHasTickets || selectedEventDirections || selectedEventShareLink || selectedEvent) && (
+                  <div className="mb-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      {selectedEventHasWebsite && selectedEvent?.website && (
+                        <Button asChild variant="outline" className="justify-start gap-2">
+                          <a href={selectedEvent.website} target="_blank" rel="noreferrer">
+                            <Globe className="w-4 h-4" /> Website
+                          </a>
+                        </Button>
+                      )}
+                      {selectedEventHasTickets && selectedEvent?.website && (
+                        <Button asChild variant="outline" className="justify-start gap-2">
+                          <a href={selectedEvent.website} target="_blank" rel="noreferrer">
+                            <Ticket className="w-4 h-4" /> Tickets
+                          </a>
+                        </Button>
+                      )}
+                      {selectedEventDirections && (
+                        <Button asChild variant="outline" className="justify-start gap-2">
+                          <a href={selectedEventDirections} target="_blank" rel="noreferrer">
+                            <Navigation2 className="w-4 h-4" /> Directions
+                          </a>
+                        </Button>
+                      )}
+                      {selectedEventShareLink && selectedEvent && (
+                        <Button variant="outline" className="justify-start gap-2" onClick={() => handleShare(selectedEvent)}>
+                          <Share2 className="w-4 h-4" /> Share
+                        </Button>
+                      )}
+                      {selectedEvent && (
+                        <Button
+                          variant={selectedEventSaved ? 'default' : 'outline'}
+                          className="justify-start gap-2"
+                          onClick={() => toggleSavedEvent(selectedEvent)}
+                        >
+                          <Bookmark className="w-4 h-4" /> {selectedEventSaved ? 'Saved' : 'Save'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="mb-4">

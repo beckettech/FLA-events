@@ -207,8 +207,8 @@ function MapMarkers({ events, onEventClick }: { events: Event[]; onEventClick: (
                   >
                     {event.category?.name}
                   </Badge>
-                  {event.priceRange && (
-                    <span className="text-xs text-gray-500">{event.priceRange}</span>
+                  {(event.priceRange || event.price === 0) && (
+                    <span className="text-xs text-gray-500">{event.priceRange ?? 'Free'}</span>
                   )}
                 </div>
                 <Button
