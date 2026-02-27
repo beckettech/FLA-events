@@ -15,22 +15,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FLA Events - Discover Amazing Events in Florida",
+  title: "FLA Events",
   description: "Your ultimate guide to discovering the best events, festivals, concerts, and experiences across Florida. From Miami nightlife to Orlando attractions.",
   keywords: ["Florida events", "Miami events", "Orlando events", "festivals", "concerts", "Tampa events", "Florida festivals"],
   authors: [{ name: "FLA Events Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
   openGraph: {
-    title: "FLA Events - Discover Amazing Events in Florida",
+    title: "FLA Events",
     description: "Your ultimate guide to discovering the best events across the Sunshine State",
     siteName: "FLA Events",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FLA Events - Discover Amazing Events in Florida",
+    title: "FLA Events",
     description: "Your ultimate guide to discovering the best events across the Sunshine State",
   },
 };
