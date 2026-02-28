@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model Category {
@@ -80,7 +79,8 @@ model Event {
   secondaryRegionId String?
   secondaryRegion   Region? @relation("SecondaryRegion", fields: [secondaryRegionId], references: [id])
 
-  tags EventTag[]
+  tags         EventTag[]
+  interactions UserInteraction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,4 +93,17 @@ model EventTag {
   tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([eventId, tagId])
+}
+
+model UserInteraction {
+  id        String   @id @default(cuid())
+  userId    String   @default("guest")
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  action    String   // "swipe_right" or "swipe_left"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([createdAt])
 }
