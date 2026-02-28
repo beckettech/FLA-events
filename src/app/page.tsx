@@ -260,7 +260,7 @@ const SPONSORED_STORIES: SponsoredStory[] = [
 
 export default function FLEventsApp() {
   const { theme, setTheme } = useTheme()
-  const [activeTab, setActiveTab] = useState<'home' | 'map' | 'explore' | 'alerts' | 'profile'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'map' | 'explore' | 'saved' | 'profile'>('home')
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [regions, setRegions] = useState<Region[]>([])
@@ -505,7 +505,7 @@ export default function FLEventsApp() {
       {/* Main Content - Scrollable (flex-col on map tab so map fills remaining space) */}
       <main className={activeTab === 'map' ? 'flex-1 overflow-hidden flex flex-col min-h-0' : 'flex-1 overflow-y-auto pb-20'}>
         {/* Shared Top Bar — all tabs except profile and dev */}
-        {activeTab !== 'profile' && activeTab !== 'alerts' && (
+        {activeTab !== 'profile' && activeTab !== 'saved' && (
           <header className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b dark:border-gray-700">
               <div className="px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
@@ -974,13 +974,13 @@ export default function FLEventsApp() {
           </div>
         )}
 
-        {/* ALERTS TAB */}
-        {activeTab === 'alerts' && (
+        {/* SAVED TAB */}
+        {activeTab === 'saved' && (
           <div className="flex flex-col items-center justify-center h-[70vh] px-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
-              <Bell className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <Heart className="w-8 h-8 text-red-500" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Alerts Yet</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Saved Events Yet</h2>
             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
               Save events and we&apos;ll notify you of updates, cancellations, and last-minute changes.
             </p>
@@ -1396,7 +1396,7 @@ export default function FLEventsApp() {
             { id: 'home', icon: HomeIcon, label: 'Home', isCenter: false },
             { id: 'map', icon: Map, label: 'Map', isCenter: false },
             { id: 'explore', icon: Compass, label: 'Explore', isCenter: true },
-            { id: 'alerts', icon: Bell, label: 'Alerts', isCenter: false },
+            { id: 'saved', icon: Heart, label: 'Saved', isCenter: false },
             { id: 'profile', icon: User, label: 'Profile', isCenter: false },
           ].map(({ id, icon: Icon, label, isCenter }) => (
             <button
