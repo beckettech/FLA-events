@@ -50,7 +50,7 @@ import {
   Bookmark,
 } from 'lucide-react'
 
-// Dynamic import for MapView
+// Dynamic imports
 const MapView = dynamic(() => import('@/components/map/MapView'), {
   ssr: false,
   loading: () => (
@@ -60,6 +60,13 @@ const MapView = dynamic(() => import('@/components/map/MapView'), {
         <p className="text-gray-500 dark:text-gray-400">Loading map...</p>
       </div>
     </div>
+  ),
+})
+
+const SwipeCard = dynamic(() => import('@/components/SwipeCard'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 w-full bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
   ),
 })
 
@@ -292,6 +299,11 @@ export default function FLEventsApp() {
     }
   })
 
+  // Swipe mode — show one event at a time for Tinder-style swiping
+  const [swipeMode, setSwipeMode] = useState(false)
+  const [swipeIndex, setSwipeIndex] = useState(0)
+  const [swipedEventIds, setSwipedEventIds] = useState<Set<string>>(new Set())
+
   // God Mode — toggled from /dev, persisted in localStorage
   // Must initialize as false to match server render, then sync after mount
   const [godMode, setGodMode] = useState(false)
@@ -377,6 +389,43 @@ export default function FLEventsApp() {
       return next
     })
   }, [])
+
+  const handleSwipeRight = useCallback((event: Event) => {
+    // Save the event
+    toggleSavedEvent(event)
+    // Track interaction
+    fetch('/api/interactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'guest', eventId: event.id, action: 'swipe_right' }),
+    }).catch((err) => console.error('Failed to track interaction:', err))
+    // Move to next event
+    moveToNextSwipeCard()
+  }, [toggleSavedEvent])
+
+  const handleSwipeLeft = useCallback((event: Event) => {
+    // Track interaction
+    fetch('/api/interactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'guest', eventId: event.id, action: 'swipe_left' }),
+    }).catch((err) => console.error('Failed to track interaction:', err))
+    // Move to next event
+    moveToNextSwipeCard()
+  }, [])
+
+  const moveToNextSwipeCard = useCallback(() => {
+    setSwipedEventIds((prev) => {
+      const event = events[swipeIndex]
+      if (event) {
+        const next = new Set(prev)
+        next.add(event.id)
+        return next
+      }
+      return prev
+    })
+    setSwipeIndex((prev) => Math.min(prev + 1, events.length - 1))
+  }, [swipeIndex, events])
 
   const handleShare = useCallback(async (event: Event) => {
     const shareUrl = event.website || (typeof window !== 'undefined' ? window.location.href : '')
@@ -793,12 +842,85 @@ export default function FLEventsApp() {
         {/* EXPLORE TAB */}
         {activeTab === 'explore' && (
           <div className="flex flex-col" style={{ minHeight: 'calc(100dvh - 120px)' }}>
-            {/* Sponsored story circles — right under search */}
-            <div className="px-4 py-3 border-b dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div
-                className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
+            {/* Swipe Mode Toggle */}
+            {!swipeMode && (
+              <div className="px-4 py-3 border-b dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Try Swipe Mode</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSwipeMode(true)
+                    setSwipeIndex(0)
+                    setSwipedEventIds(new Set())
+                  }}
+                  className="gap-2"
+                >
+                  <Heart className="w-4 h-4" /> Swipe
+                </Button>
+              </div>
+            )}
+
+            {swipeMode && events.length > 0 && swipeIndex < events.length ? (
+              // Swipe mode view
+              <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+                <div className="w-full max-w-sm">
+                  <SwipeCard
+                    event={events[swipeIndex]}
+                    onSwipeLeft={() => handleSwipeLeft(events[swipeIndex])}
+                    onSwipeRight={() => handleSwipeRight(events[swipeIndex])}
+                    onClose={() => setSwipeMode(false)}
+                  />
+                </div>
+                {/* Exit button */}
+                <button
+                  onClick={() => setSwipeMode(false)}
+                  className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {/* Progress indicator */}
+                <div className="absolute bottom-20 left-0 right-0 px-4">
+                  <div className="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    {swipeIndex + 1} / {events.length}
+                  </div>
+                  <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 transition-all"
+                      style={{ width: `${((swipeIndex + 1) / events.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : swipeMode && (events.length === 0 || swipeIndex >= events.length) ? (
+              // No more events
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="text-center">
+                  <Heart className="w-16 h-16 text-red-500 mx-auto mb-4 opacity-30" />
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    {events.length === 0 ? 'No Events to Swipe' : 'All Caught Up!'}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    {events.length === 0
+                      ? 'Try adjusting your filters'
+                      : `You've swiped through ${swipeIndex} events`}
+                  </p>
+                  <Button
+                    onClick={() => setSwipeMode(false)}
+                    className="gap-2"
+                  >
+                    Back to Feed
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Sponsored story circles — right under search */}
+                <div className="px-4 py-3 border-b dark:border-gray-700 bg-white dark:bg-gray-900">
+                  <div
+                    className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
                 {SPONSORED_STORIES.map((story, index) => (
                   <button
                     key={story.id}
@@ -903,6 +1025,8 @@ export default function FLEventsApp() {
                 ))
               )}
             </div>
+            </>
+            )}
           </div>
         )}
 
@@ -976,14 +1100,62 @@ export default function FLEventsApp() {
 
         {/* SAVED TAB */}
         {activeTab === 'saved' && (
-          <div className="flex flex-col items-center justify-center h-[70vh] px-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-              <Heart className="w-8 h-8 text-red-500" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Saved Events Yet</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
-              Save events and we&apos;ll notify you of updates, cancellations, and last-minute changes.
-            </p>
+          <div className="flex flex-col flex-1">
+            {savedEventIds.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[70vh] px-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <Heart className="w-8 h-8 text-red-500" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Saved Events Yet</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">
+                  Save events from the Explore tab and they&apos;ll appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 space-y-4 pb-20">
+                {events
+                  .filter((e) => savedEventIds.includes(e.id))
+                  .map((event) => (
+                    <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => fetchEventDetails(event.slug)}>
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          {event.imageUrl && (
+                            <img
+                              src={event.imageUrl}
+                              alt={event.title}
+                              className="w-20 h-20 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="font-bold text-gray-900 dark:text-white line-clamp-1">
+                              {event.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {event.venue}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                              {new Date(event.startDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleSavedEvent(event)
+                            }}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Heart className="w-5 h-5 fill-red-500" />
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
           </div>
         )}
       </main>
