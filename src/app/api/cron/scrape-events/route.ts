@@ -113,12 +113,18 @@ export async function GET(req: NextRequest) {
     const regions = await prisma.region.findMany();
 
     // Fetch events from Ticketmaster
+    // Add date range to get future events only
+    const now = new Date();
+    const sixMonthsLater = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+
     const params = new URLSearchParams({
       apikey: TM_API_KEY,
       stateCode: STATE_CODE,
       size: '200',
       page: '0',
       sort: 'date,asc',
+      startDateTime: now.toISOString().split('T')[0] + 'T00:00:00Z',
+      endDateTime: sixMonthsLater.toISOString().split('T')[0] + 'T23:59:59Z',
     });
 
     const response = await fetch(`${TM_API_URL}?${params}`);
@@ -140,13 +146,22 @@ export async function GET(req: NextRequest) {
 
         const dateStr = tmEvent.dates.start.localDate;
         const timeStr = tmEvent.dates.start.localTime || '19:00:00';
-        const startDate = new Date(`${dateStr}T${timeStr}`);
-        
-        // Skip past events
-        if (startDate < new Date()) continue;
+        // Parse date and time properly - Ticketmaster returns Eastern time
+        // We need to parse it as local time, not UTC
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+        const startDate = new Date(year, month - 1, day, hours, minutes, seconds);
+
+        // Skip past events (compare with current time)
+        const now = new Date();
+        if (startDate < now) continue;
 
         const endDateStr = tmEvent.dates.end?.localDate;
-        const endDate = endDateStr ? new Date(`${endDateStr}T23:59:59`) : null;
+        let endDate = null;
+        if (endDateStr) {
+          const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+          endDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59);
+        }
 
         const categoryName = classification?.segment?.name || 'Other';
         const categorySlug = slugify(categoryName);

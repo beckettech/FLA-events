@@ -175,16 +175,24 @@ async function transformAndSaveEvent(tmEvent: TicketmasterEvent, categories: any
     const priceRange = tmEvent.priceRanges?.[0];
     const image = tmEvent.images?.sort((a, b) => b.width - a.width)[0];
 
-    // Parse date and time
+    // Parse date and time - Ticketmaster returns Eastern time
+    // We need to parse it as local time, not UTC
     const dateStr = tmEvent.dates.start.localDate;
     const timeStr = tmEvent.dates.start.localTime || '19:00:00';
-    const startDate = new Date(`${dateStr}T${timeStr}`);
-    
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+    const startDate = new Date(year, month - 1, day, hours, minutes, seconds);
+
+    let endDate = null;
     const endDateStr = tmEvent.dates.end?.localDate;
-    const endDate = endDateStr ? new Date(`${endDateStr}T23:59:59`) : null;
+    if (endDateStr) {
+      const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+      endDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59);
+    }
 
     // Skip past events
-    if (startDate < new Date()) {
+    const now = new Date();
+    if (startDate < now) {
       return null;
     }
 

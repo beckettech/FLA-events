@@ -4,12 +4,13 @@ import { prisma } from '@/lib/prisma'
 import EventDetailClient from './EventDetailClient'
 
 interface PageProps {
-  params: { slug: string }
-  searchParams: { ref?: string }
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ ref?: string }>
 }
 
 // Generate metadata for OG tags
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
   const event = await prisma.event.findUnique({
     where: { slug: params.slug },
     include: {
@@ -56,8 +57,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function EventPage({ params, searchParams }: PageProps) {
+  const { slug } = await params
+  const { ref } = await searchParams
+
   const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       category: true,
       region: true,
@@ -90,7 +94,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   return (
     <EventDetailClient
       event={event}
-      referrerId={searchParams.ref}
+      referrerId={ref}
     />
   )
 }

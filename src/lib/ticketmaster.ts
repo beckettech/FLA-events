@@ -128,8 +128,16 @@ function normalizeTicketmasterEvent(ev: TMEvent): ParsedEvent | null {
     const lat = parseFloat(venue?.location?.latitude ?? '25.7617')
     const lng = parseFloat(venue?.location?.longitude ?? '-80.1918')
 
-    const startDate = new Date(ev.dates.start.localDate + (ev.dates.start.localTime ? `T${ev.dates.start.localTime}` : 'T19:00:00'))
-    const endDate = ev.dates.end?.localDate ? new Date(ev.dates.end.localDate) : null
+    // Parse dates properly - Ticketmaster returns Eastern time
+    const [year, month, day] = ev.dates.start.localDate.split('-').map(Number)
+    const timeParts = ev.dates.start.localTime ? ev.dates.start.localTime.split(':').map(Number) : [19, 0, 0]
+    const startDate = new Date(year, month - 1, day, timeParts[0], timeParts[1], timeParts[2])
+
+    let endDate = null
+    if (ev.dates.end?.localDate) {
+      const [endYear, endMonth, endDay] = ev.dates.end.localDate.split('-').map(Number)
+      endDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59)
+    }
 
     const segmentName = ev.classifications?.[0]?.segment?.name ?? 'Miscellaneous'
     const categorySlug = TM_CATEGORY_MAP[segmentName] ?? 'community'
