@@ -1,0 +1,29 @@
+{
+  "name": "FLA Events",
+  "short_name": "FLA Events",
+  "description": "Discover the best events across the Sunshine State",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["entertainment", "lifestyle", "events"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Explore Events",
+      "short_name": "Explore",
+      "description": "Swipe through events",
+      "url": "/?tab=explore",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+    }
+  ]
+}

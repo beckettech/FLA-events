@@ -121,7 +121,71 @@
   }
 }
 
+@layer base {
+  /* Mobile optimization */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  /* Safe area insets for iPhone notch/home indicator */
+  body {
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Smooth scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  /* Touch manipulation - better tap responsiveness */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent text selection during swipe */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* GPU acceleration for animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Safe area padding helpers */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0);
+  }
 }
