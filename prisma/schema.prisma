@@ -83,6 +83,8 @@ model Event {
   interactions    UserInteraction[]
   sponsoredEvents SponsoredEvent[]
   savedBy         SavedEvent[]
+  shareEvents     ShareEvent[]
+  referrals       Referral[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -118,6 +120,9 @@ model User {
   sessions      Session[]
   interactions  UserInteraction[]
   savedEvents   SavedEvent[]
+  shareEvents   ShareEvent[]
+  referrals     Referral[] @relation("Referrals")
+  referralsReceived Referral[] @relation("Referrals_Received")
   preferences   Json? // Flexible preferences storage
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -255,5 +260,43 @@ model SponsorAnalytic {
   @@index([sponsorId])
   @@index([eventId])
   @@index([metric])
+  @@index([createdAt])
+}
+
+// Social Sharing & Referral Tracking
+model Referral {
+  id         String    @id @default(cuid())
+  referrerId String
+  referrer   User      @relation("Referrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId  String?   // Nullable until they sign up
+  referee    User?     @relation("Referrals_Received", fields: [refereeId], references: [id], onDelete: Cascade)
+  eventId    String?
+  event      Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  status     String    @default("pending") // "pending", "converted", "registered"
+  metadata   String?   // JSON for UTM params, platform, etc.
+  createdAt  DateTime  @default(now())
+  convertedAt DateTime?
+
+  @@index([referrerId])
+  @@index([refereeId])
+  @@index([eventId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ShareEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  platform   String   // "twitter", "facebook", "linkedin", "whatsapp", "sms", "email", "copy", "native"
+  successful Boolean  @default(true)
+  metadata   String?  // JSON for additional tracking data
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([platform])
   @@index([createdAt])
 }

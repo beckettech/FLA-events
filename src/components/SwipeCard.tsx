@@ -5,6 +5,7 @@ import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { X, Heart } from 'lucide-react'
+import ShareButton from './ShareButton'
 
 interface SwipeCardProps {
   event: {
@@ -16,6 +17,7 @@ interface SwipeCardProps {
     startDate: string
     price?: number | null
     priceRange?: string | null
+    slug?: string
   }
   onSwipeLeft: () => void
   onSwipeRight: () => void
@@ -111,6 +113,22 @@ export default function SwipeCard({
                 className="w-full h-full object-cover"
                 draggable={false}
               />
+              
+              {/* Share button in top right */}
+              {event.slug && (
+                <div className="absolute top-4 right-4 z-20 pointer-events-auto">
+                  <ShareButton
+                    eventId={event.id}
+                    eventTitle={event.title}
+                    eventSlug={event.slug}
+                    eventDescription={event.description}
+                    variant="outline"
+                    size="icon"
+                    iconOnly
+                    className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800"
+                  />
+                </div>
+              )}
               
               {/* Left swipe overlay (red) */}
               <motion.div
