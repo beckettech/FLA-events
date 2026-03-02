@@ -105,7 +105,7 @@ export default function SwipeCard({
           {/* Image */}
           {event.imageUrl && (
             <div className="relative w-full h-80 overflow-hidden bg-gray-200 dark:bg-gray-700">
-              <img
+              <img loading="lazy" decoding="async"
                 src={event.imageUrl}
                 alt={event.title}
                 className="w-full h-full object-cover"

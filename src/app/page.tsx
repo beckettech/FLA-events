@@ -560,7 +560,7 @@ export default function FLEventsApp() {
                 <div className="flex items-center justify-between gap-2">
                   {/* Logo */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <img src="/logo.png" alt="FL Events" className="w-9 h-9 rounded-full object-cover" />
+                    <img src="/logo.png" alt="FL Events" className="w-9 h-9 rounded-full object-cover" loading="eager" />
                     <h1 className="text-xl font-bold text-blue-600 tracking-tight">FLA Events</h1>
                   </div>
 
@@ -715,7 +715,7 @@ export default function FLEventsApp() {
                       <div className="flex gap-3">
                         {/* Event Image */}
                         {event.imageUrl ? (
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={event.imageUrl}
                             alt={event.title}
                             className="w-20 h-20 rounded-lg shrink-0 object-cover"
@@ -1120,7 +1120,7 @@ export default function FLEventsApp() {
                       <CardContent className="p-4">
                         <div className="flex gap-3">
                           {event.imageUrl && (
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={event.imageUrl}
                               alt={event.title}
                               className="w-20 h-20 object-cover rounded"
@@ -1609,7 +1609,7 @@ export default function FLEventsApp() {
               {/* Header Image */}
               <div className="h-48 w-full relative overflow-hidden">
                 {selectedEvent.imageUrl ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={selectedEvent.imageUrl}
                     alt={selectedEvent.title}
                     className="w-full h-full object-cover"
