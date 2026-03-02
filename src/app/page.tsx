@@ -552,7 +552,7 @@ export default function FLEventsApp() {
       <div className="bg-blue-600 h-1" />
 
       {/* Main Content - Scrollable (flex-col on map tab so map fills remaining space) */}
-      <main className={activeTab === 'map' ? 'flex-1 overflow-hidden flex flex-col min-h-0' : 'flex-1 overflow-y-auto pb-20'}>
+      <main className={activeTab === 'map' ? 'flex-1 overflow-hidden flex flex-col min-h-0' : 'flex-1 overflow-y-auto pb-nav'}>
         {/* Shared Top Bar — all tabs except profile and dev */}
         {activeTab !== 'profile' && activeTab !== 'saved' && (
           <header className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b dark:border-gray-700">
@@ -1112,7 +1112,7 @@ export default function FLEventsApp() {
                 </p>
               </div>
             ) : (
-              <div className="p-4 space-y-4 pb-20">
+              <div className="p-4 space-y-4 pb-nav">
                 {events
                   .filter((e) => savedEventIds.includes(e.id))
                   .map((event) => (
@@ -1562,7 +1562,13 @@ export default function FLEventsApp() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-700 safe-area-pb" style={{ zIndex: 1000 }}>
+      <nav 
+        className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-700" 
+        style={{ 
+          zIndex: 1000,
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)'
+        }}
+      >
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
           {[
             { id: 'home', icon: HomeIcon, label: 'Home', isCenter: false },
@@ -1917,7 +1923,7 @@ function DevTab({ categories, regions }: { password: string; categories: Categor
   }
 
   if (!authed) return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center pb-20">
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center pb-nav">
       <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 w-full max-w-sm mx-4">
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🛠️</div>
@@ -1936,7 +1942,7 @@ function DevTab({ categories, regions }: { password: string; categories: Categor
   )
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-20">
+    <div className="min-h-screen bg-gray-950 text-white pb-nav">
       {/* Dev Header */}
       <div className="bg-gray-900 border-b border-gray-800 px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between gap-3 mb-2">

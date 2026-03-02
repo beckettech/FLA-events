@@ -188,4 +188,9 @@
   .safe-right {
     padding-right: env(safe-area-inset-right, 0);
   }
+
+  /* Bottom nav spacing - accounts for 64px nav + safe area */
+  .pb-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
