@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isStale } from '@/lib/syncManager'
 import { runBackgroundSync } from '@/lib/backgroundSync'
+import { cache, createCacheKey, TTL } from '@/lib/cache'
+
+// Cache configuration - revalidate every 5 minutes
+export const revalidate = 300
 
 export async function GET(request: Request) {
+  const startTime = Date.now()
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
   const region = searchParams.get('region')
@@ -11,6 +16,28 @@ export async function GET(request: Request) {
   const featured = searchParams.get('featured')
   const boundsParam = searchParams.get('bounds')
   const tag = searchParams.get('tag')
+
+  // Create cache key from request parameters
+  const cacheKey = createCacheKey('events', {
+    category: category || '',
+    region: region || '',
+    search: search || '',
+    featured: featured || '',
+    bounds: boundsParam || '',
+    tag: tag || '',
+  })
+
+  // Try to get from cache first
+  const cachedData = cache.get(cacheKey)
+  if (cachedData) {
+    const cacheHitTime = Date.now() - startTime
+    console.log(`[events/GET] Cache HIT in ${cacheHitTime}ms`)
+    
+    const response = NextResponse.json(cachedData)
+    response.headers.set('X-Cache', 'HIT')
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    return response
+  }
 
   // ── Background sync (non-blocking) ────────────────────────────────────────
   // If TM/EB data is stale (>1hr), kick off a refresh in background.
@@ -39,9 +66,9 @@ export async function GET(request: Request) {
     if (search) {
       andFilters.push({
         OR: [
-          { title: { contains: search } },
-          { description: { contains: search } },
-          { venue: { contains: search } },
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { venue: { contains: search, mode: 'insensitive' } },
         ],
       })
     }
@@ -68,11 +95,62 @@ export async function GET(request: Request) {
 
     const events = await db.event.findMany({
       where,
-      include: {
-        category: true,
-        region: true,
-        secondaryRegion: true,
-        tags: { include: { tag: true } },
+      // Only select fields needed for list view
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        venue: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        startDate: true,
+        endDate: true,
+        price: true,
+        priceRange: true,
+        imageUrl: true,
+        website: true,
+        rating: true,
+        reviewCount: true,
+        viewCount: true,
+        isFeatured: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+          },
+        },
+        region: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        secondaryRegion: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                color: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [
         { isFeatured: 'desc' },
@@ -86,9 +164,22 @@ export async function GET(request: Request) {
       tags: event.tags.map(t => t.tag),
     }))
 
-    return NextResponse.json(eventsWithCoords)
+    // Cache the result for 3 minutes
+    cache.set(cacheKey, eventsWithCoords, TTL.FIVE_MINUTES)
+
+    const responseTime = Date.now() - startTime
+    console.log(`[events/GET] Cache MISS - Returned ${eventsWithCoords.length} events in ${responseTime}ms`)
+
+    const response = NextResponse.json(eventsWithCoords)
+    
+    // Add caching headers
+    response.headers.set('X-Cache', 'MISS')
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    
+    return response
   } catch (error) {
-    console.error('Error fetching events:', error)
+    const errorTime = Date.now() - startTime
+    console.error(`[events/GET] Error after ${errorTime}ms:`, error)
     return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
   }
 }

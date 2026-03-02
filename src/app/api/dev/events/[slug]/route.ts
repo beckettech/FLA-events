@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkEventCancellation } from '@/lib/cancellationUtils'
+import { cache } from '@/lib/cache'
 
 function checkAuth(request: Request): boolean {
   return request.headers.get('Authorization')?.replace('Bearer ', '') === process.env.DEV_PASSWORD
@@ -43,6 +44,11 @@ export async function PATCH(
     if (typeof body.title === 'string') {
       await checkEventCancellation(updated.id, updated.title)
     }
+    
+    // Invalidate all event caches when data changes
+    cache.clear()
+    console.log('[dev/events] Cache cleared after event update')
+    
     return NextResponse.json(updated)
   } catch {
     return NextResponse.json({ error: 'Event not found or update failed' }, { status: 404 })
@@ -59,6 +65,11 @@ export async function DELETE(
   const { slug } = await params
   try {
     await db.event.delete({ where: { slug } })
+    
+    // Invalidate all event caches when data changes
+    cache.clear()
+    console.log('[dev/events] Cache cleared after event deletion')
+    
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 })

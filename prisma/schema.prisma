@@ -84,6 +84,16 @@ model Event {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Performance indexes
+  @@index([categoryId])
+  @@index([regionId])
+  @@index([secondaryRegionId])
+  @@index([startDate])
+  @@index([isFeatured])
+  @@index([isActive])
+  @@index([isActive, isFeatured, startDate])
+  @@index([latitude, longitude])
 }
 
 model EventTag {
