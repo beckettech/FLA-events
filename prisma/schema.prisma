@@ -79,8 +79,9 @@ model Event {
   secondaryRegionId String?
   secondaryRegion   Region? @relation("SecondaryRegion", fields: [secondaryRegionId], references: [id])
 
-  tags         EventTag[]
-  interactions UserInteraction[]
+  tags            EventTag[]
+  interactions    UserInteraction[]
+  sponsoredEvents SponsoredEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,5 +116,72 @@ model UserInteraction {
 
   @@index([userId])
   @@index([eventId])
+  @@index([createdAt])
+}
+
+enum SponsorTier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+model Sponsor {
+  id               String            @id @default(cuid())
+  name             String
+  email            String            @unique
+  logoUrl          String?
+  website          String?
+  description      String?
+  tier             SponsorTier       @default(BRONZE)
+  isActive         Boolean           @default(true)
+  billingEmail     String?
+  phone            String?
+  contactName      String?
+  monthlyBudget    Float             @default(50)
+  sponsoredEvents  SponsoredEvent[]
+  analytics        SponsorAnalytic[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([tier])
+  @@index([isActive])
+}
+
+model SponsoredEvent {
+  id              String   @id @default(cuid())
+  sponsorId       String
+  sponsor         Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  placementType   String   @default("featured") // "featured", "top", "promoted"
+  priority        Int      @default(0) // Higher number = higher placement
+  startDate       DateTime @default(now())
+  endDate         DateTime?
+  isActive        Boolean  @default(true)
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([sponsorId, eventId])
+  @@index([eventId])
+  @@index([sponsorId])
+  @@index([isActive])
+  @@index([priority])
+}
+
+model SponsorAnalytic {
+  id          String   @id @default(cuid())
+  sponsorId   String
+  sponsor     Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  eventId     String?  // Nullable for sponsor-level analytics
+  metric      String   // "impression", "click", "conversion"
+  value       Int      @default(1)
+  metadata    String?  // JSON string for additional data
+  createdAt   DateTime @default(now())
+
+  @@index([sponsorId])
+  @@index([eventId])
+  @@index([metric])
   @@index([createdAt])
 }

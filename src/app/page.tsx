@@ -70,6 +70,10 @@ const SwipeCard = dynamic(() => import('@/components/SwipeCard'), {
   ),
 })
 
+const SponsoredBadge = dynamic(() => import('@/components/SponsoredBadge'), {
+  ssr: false,
+})
+
 // Types
 interface Category {
   id: string
@@ -102,6 +106,21 @@ interface Tag {
   _count?: { events: number }
 }
 
+interface Sponsor {
+  id: string
+  name: string
+  logoUrl: string | null
+  website: string | null
+  tier: string
+}
+
+interface SponsoredEvent {
+  id: string
+  placementType: string
+  priority: number
+  sponsor: Sponsor
+}
+
 interface Event {
   id: string
   title: string
@@ -127,6 +146,7 @@ interface Event {
   region: Region
   secondaryRegion: Region | null
   tags: Tag[]
+  sponsoredEvents?: SponsoredEvent[]
 }
 
 // Category icons mapping
@@ -751,6 +771,14 @@ export default function FLEventsApp() {
                             >
                               {event.category.name}
                             </Badge>
+                            {/* Sponsored Badge */}
+                            {event.sponsoredEvents && event.sponsoredEvents.length > 0 && event.sponsoredEvents[0].sponsor && (
+                              <SponsoredBadge
+                                sponsor={event.sponsoredEvents[0].sponsor}
+                                eventId={event.id}
+                                variant="compact"
+                              />
+                            )}
                             {/* Tags — cancelled overrides all others */}
                             {event.tags?.some(t => t.slug === 'cancelled') ? (
                               <Badge

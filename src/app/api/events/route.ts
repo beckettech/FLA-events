@@ -151,6 +151,25 @@ export async function GET(request: Request) {
             },
           },
         },
+        sponsoredEvents: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            placementType: true,
+            priority: true,
+            sponsor: {
+              select: {
+                id: true,
+                name: true,
+                logoUrl: true,
+                website: true,
+                tier: true,
+              },
+            },
+          },
+          orderBy: { priority: 'desc' },
+          take: 1,
+        },
       },
       orderBy: [
         { isFeatured: 'desc' },
