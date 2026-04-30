@@ -49,3 +49,5 @@ prompt
 server.log
 # Skills directory
 /skills/
+# Dev screenshots (kept in repo for README)
+# screenshots/ is committed for README display
