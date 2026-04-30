@@ -29,31 +29,22 @@ Live at **[flaevents.com](https://www.flaevents.com)**
 ### 🔍 Smart Event Discovery
 Browse **180+ events** across Florida. Filter by category, region, date, and price.
 
-<p float="left">
-  <img src="screenshots/home-mobile-dark.png" width="250" />
-  <img src="screenshots/home-mobile-light.png" width="250" />
-</p>
+<img src="screenshots/home.png" width="250" />
 
 ### 🗺️ Interactive Map
 Explore events on an interactive map — tap markers for details, filter by region.
 
-<p float="left">
-  <img src="screenshots/map-mobile-dark.png" width="250" />
-  <img src="screenshots/map-mobile-light.png" width="250" />
-</p>
+<img src="screenshots/map.png" width="250" />
 
 ### 🎭 Rich Event Details
 Every event includes venue info, pricing, directions, share & save, and direct ticket links.
 
-<p float="left">
-  <img src="screenshots/detail-mobile-dark.png" width="250" />
-  <img src="screenshots/detail-mobile-light.png" width="250" />
-</p>
+<img src="screenshots/event-detail.png" width="250" />
 
 ### 🎯 Category Filtering
 One-tap filters for Music, Sports, Arts, Food, Nightlife, Festivals, Film, Family, and Car Shows.
 
-<img src="screenshots/music-mobile-dark.png" width="250" />
+<img src="screenshots/music-filter.png" width="250" />
 
 ### 📱 Mobile-First + Dark Mode
 Built mobile-first with dark/light theme support, smooth scrolling, and swipe gestures.
