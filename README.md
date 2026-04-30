@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.svg" alt="FLA Events" width="80" height="80" />
+  <img src="public/logo-sm.png" alt="FLA Events" width="80" height="80" />
   <h1 align="center">FLA Events</h1>
   <p align="center">
     <strong>Florida's Premier Event Discovery Platform</strong><br/>
