@@ -24,33 +24,39 @@ Live at **[flaevents.com](https://www.flaevents.com)**
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
 ### 🔍 Smart Event Discovery
-Browse **180+ events** across **7 regions** — Miami, Orlando, Tampa, Jacksonville, Fort Lauderdale, St. Petersburg, and beyond. Filter by category, region, date, and price.
+Browse **180+ events** across Florida. Filter by category, region, date, and price.
 
-<img src="screenshots/home-top.png" alt="Homepage - Event Discovery" width="800" />
+<p float="left">
+  <img src="screenshots/home-mobile-dark.png" width="250" />
+  <img src="screenshots/home-mobile-light.png" width="250" />
+</p>
 
-### 🎯 Category Filtering
-One-tap filters for Music, Sports, Arts, Food, Nightlife, Festivals, Film, Family events, and more.
+### 🗺️ Interactive Map
+Explore events on an interactive map — tap markers for details, filter by region.
 
-<img src="screenshots/home-events.png" alt="Category Filtering" width="800" />
-
-### 📱 Mobile-First Design
-Built mobile-first with a native app feel — smooth scrolling, swipe gestures, and responsive layouts.
-
-<img src="screenshots/home-mobile.png" alt="Mobile View" width="250" />
+<p float="left">
+  <img src="screenshots/map-mobile-dark.png" width="250" />
+  <img src="screenshots/map-mobile-light.png" width="250" />
+</p>
 
 ### 🎭 Rich Event Details
-Every event includes venue info, pricing, directions, share & save functionality, and direct ticket links.
+Every event includes venue info, pricing, directions, share & save, and direct ticket links.
 
-<img src="screenshots/event-detail.png" alt="Event Detail" width="600" />
+<p float="left">
+  <img src="screenshots/detail-mobile-dark.png" width="250" />
+  <img src="screenshots/detail-mobile-light.png" width="250" />
+</p>
 
-### 🗺️ Interactive Map View
-Explore events on an interactive map with cluster markers and region-based filtering.
+### 🎯 Category Filtering
+One-tap filters for Music, Sports, Arts, Food, Nightlife, Festivals, Film, Family, and Car Shows.
 
-### 💾 Save & Share
-Bookmark your favorite events and share them directly to social media.
+<img src="screenshots/music-mobile-dark.png" width="250" />
+
+### 📱 Mobile-First + Dark Mode
+Built mobile-first with dark/light theme support, smooth scrolling, and swipe gestures.
 
 ### 🤖 Automated Event Scraping
 Events are automatically scraped and updated daily via Vercel Cron Jobs — no manual data entry.
@@ -59,7 +65,7 @@ Events are automatically scraped and updated daily via Vercel Cron Jobs — no m
 Built-in sponsorship platform for event organizers to promote their events.
 
 ### 🔐 Full Authentication
-NextAuth.js integration with Google OAuth, magic links, and profile management.
+NextAuth.js with Google OAuth, magic links, and profile management.
 
 ---
 
@@ -72,92 +78,31 @@ NextAuth.js integration with Google OAuth, magic links, and profile management.
 | **Styling** | Tailwind CSS 4 + shadcn/ui |
 | **Database** | PostgreSQL via Prisma ORM |
 | **Auth** | NextAuth.js |
-| **Maps** | Leaflet + Mapbox |
+| **Maps** | Leaflet |
 | **Animations** | Framer Motion |
 | **State** | Zustand + TanStack Query |
 | **Hosting** | Vercel |
-| **Domain** | flaevents.com |
 
 ---
 
-## 🚀 Getting Started
+## 🌍 Regions
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL database
-- npm or bun
-
-### Setup
-
-```bash
-# Clone the repo
-git clone https://github.com/beckettech/FLA-events.git
-cd FLA-events
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your DATABASE_URL, NEXTAUTH_SECRET, etc.
-
-# Run database migrations
-npx prisma db push
-
-# Start dev server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
----
-
-## 📁 Project Structure
-
-```
-FLA-events/
-├── src/
-│   ├── app/              # Next.js App Router pages
-│   │   ├── page.tsx      # Homepage (event discovery)
-│   │   ├── events/       # Event detail pages
-│   │   ├── admin/        # Admin dashboard
-│   │   ├── api/          # API routes + cron jobs
-│   │   ├── auth/         # Authentication pages
-│   │   ├── profile/      # User profile
-│   │   └── saved/        # Saved/bookmarked events
-│   ├── components/       # React components
-│   │   ├── map/          # MapView component
-│   │   ├── SwipeCard.tsx # Tinder-style event cards
-│   │   └── SponsoredBadge.tsx
-│   ├── hooks/            # Custom React hooks
-│   └── lib/              # Utilities + Prisma client
-├── prisma/
-│   └── schema.prisma     # Database schema
-├── public/               # Static assets
-└── scripts/              # Utility scripts
-```
-
----
-
-## 🌍 Regions Covered
-
-| Region | Events |
-|--------|--------|
-| Miami | Concerts, nightlife, sports |
-| Orlando | Theme parks, family events, arts |
-| Tampa | Sports, music, festivals |
-| Jacksonville | Theatre, comedy, community |
-| Fort Lauderdale | Beach events, concerts |
-| St. Petersburg | Arts, culture, dining |
-| Statewide | Major tours, festivals |
+| Region | Coverage |
+|--------|----------|
+| **SoFlo** | Miami, Fort Lauderdale, West Palm Beach |
+| **Central Florida** | Orlando, Daytona Beach, Space Coast |
+| **Tampa Bay** | Tampa, St. Petersburg, Clearwater, Sarasota |
+| **SWFL** | Naples, Fort Myers, Cape Coral |
+| **North Florida** | Jacksonville, Gainesville, St. Augustine |
+| **Panhandle** | Pensacola, Tallahassee, Panama City |
 
 ---
 
 ## 📊 Scale
 
 - **180+** live events at any time
-- **7** Florida regions
-- **10+** event categories
+- **6** Florida regions
+- **8** event categories
 - Daily automated scraping & cleanup
 - Sub-second page loads via Vercel Edge
 
